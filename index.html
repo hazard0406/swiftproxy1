@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>SwiftProxy</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#4f46e5;--primary-dark:#3730a3;--primary-light:#818cf8;
+  --bg:#f8fafc;--card:#fff;--text:#1e293b;--muted:#64748b;
+  --border:#e2e8f0;--danger:#ef4444;--success:#22c55e;
+}
+body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+
+nav{background:var(--primary);padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:56px;box-shadow:0 2px 8px #0002}
+.logo{color:#fff;font-size:1.3rem;font-weight:700;display:flex;align-items:center;gap:.5rem}
+.logo span{background:#fff2;border-radius:6px;padding:2px 8px;font-size:.72rem;font-weight:600}
+.nav-links a{color:#c7d2fe;text-decoration:none;font-size:.85rem;margin-left:1.5rem}
+
+.hero{background:linear-gradient(135deg,#4f46e5,#7c3aed);padding:3.5rem 1rem 4rem;text-align:center;color:#fff}
+.hero h1{font-size:2.2rem;font-weight:800;margin-bottom:.75rem}
+.hero p{color:#c7d2fe;font-size:1rem;max-width:520px;margin:0 auto 2rem}
+
+.search-wrap{background:#fff;border-radius:14px;padding:1.5rem;max-width:640px;margin:0 auto;box-shadow:0 8px 32px #0003}
+.worker-notice{background:#fef9c3;border:1px solid #fde68a;border-radius:8px;padding:.65rem 1rem;font-size:.8rem;color:#92400e;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
+.worker-notice input{flex:1;border:1px solid #fcd34d;border-radius:6px;padding:3px 8px;font-size:.8rem;outline:none;background:#fffbeb}
+.worker-notice button{background:#d97706;color:#fff;border:none;border-radius:6px;padding:3px 10px;font-size:.78rem;cursor:pointer}
+.url-row{display:flex;gap:.5rem}
+.url-input{flex:1;border:2px solid var(--border);border-radius:8px;padding:.65rem 1rem;font-size:1rem;outline:none;transition:border .2s}
+.url-input:focus{border-color:var(--primary)}
+.go-btn{background:var(--primary);color:#fff;border:none;border-radius:8px;padding:.65rem 1.4rem;font-size:1rem;font-weight:600;cursor:pointer;transition:background .2s}
+.go-btn:hover{background:var(--primary-dark)}
+.go-btn:disabled{opacity:.6;cursor:not-allowed}
+
+.loader-wrap{display:none;flex-direction:column;align-items:center;gap:1rem;padding:3rem}
+.loader-wrap.show{display:flex}
+.spinner{width:42px;height:42px;border:4px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader-msg{color:var(--muted);font-size:.95rem}
+
+.error-box{display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:1.25rem;max-width:540px;margin:1.5rem auto;text-align:center}
+.error-box.show{display:block}
+.error-box h3{color:var(--danger);margin-bottom:.4rem}
+.error-box p{color:#7f1d1d;font-size:.875rem;margin-bottom:.75rem}
+.error-box button{background:var(--primary);color:#fff;border:none;border-radius:7px;padding:.4rem 1rem;cursor:pointer;font-size:.85rem}
+
+#frame-section{display:none;flex-direction:column;flex:1}
+#frame-section.show{display:flex}
+
+.status-bar{background:#1e1b4b;padding:.45rem 1rem;display:flex;align-items:center;gap:.6rem;font-size:.8rem;color:#c7d2fe;flex-wrap:wrap}
+.badge{border-radius:20px;padding:2px 10px;font-size:.72rem;background:#ffffff18}
+.badge.secure{color:#86efac}
+.badge.warn{color:#fca5a5}
+.status-url{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:monospace;font-size:.75rem}
+.close-btn{background:var(--danger);color:#fff;border:none;border-radius:6px;padding:2px 10px;font-size:.78rem;cursor:pointer}
+
+.toolbar{background:#2d2b55;display:flex;align-items:center;gap:.4rem;padding:.4rem .75rem}
+.tb-btn{background:#ffffff15;color:#c7d2fe;border:none;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:.8rem}
+.tb-btn:hover{background:#ffffff28}
+.tb-url{flex:1;background:#ffffff10;border:1px solid #ffffff22;border-radius:6px;padding:4px 10px;color:#fff;font-size:.82rem;outline:none}
+.tb-url:focus{border-color:var(--primary-light)}
+
+#proxy-frame{flex:1;border:none;width:100%;min-height:70vh;background:#fff}
+
+.features{padding:3rem 1rem;max-width:900px;margin:0 auto;width:100%}
+.features h2{text-align:center;font-size:1.35rem;margin-bottom:1.75rem}
+.feat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:1.1rem}
+.feat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.1rem;display:flex;gap:.75rem;align-items:flex-start}
+.feat-icon{font-size:1.5rem}
+.feat-card h4{font-size:.9rem;margin-bottom:.2rem}
+.feat-card p{font-size:.78rem;color:var(--muted)}
+
+footer{background:#1e293b;color:#94a3b8;text-align:center;padding:1.1rem;font-size:.78rem;margin-top:auto}
+footer a{color:#818cf8;text-decoration:none}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">🌐 SwiftProxy <span>POWERED BY CF WORKERS</span></div>
+  <div class="nav-links">
+    <a href="#">Home</a><a href="#">About</a><a href="#">FAQ</a>
+  </div>
+</nav>
+
+<!-- HOME -->
+<div id="home-section">
+  <div class="hero">
+    <h1>Browse Freely &amp; Securely</h1>
+    <p>Real server-side proxy powered by Cloudflare Workers. Paste a URL and browse anonymously.</p>
+    <div class="search-wrap">
+      <!-- Worker URL setup -->
+      <div class="worker-notice" id="worker-notice">
+        ⚙️ Worker URL: <input id="worker-url" type="text" placeholder="https://your-worker.your-name.workers.dev"/>
+        <button onclick="saveWorker()">Save</button>
+      </div>
+      <div class="url-row">
+        <input id="url-input" class="url-input" type="text" placeholder="e.g. https://wikipedia.org" autocomplete="off" spellcheck="false"/>
+        <button class="go-btn" id="go-btn" onclick="startProxy()">Go</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="loader-wrap" id="loader">
+    <div class="spinner"></div>
+    <div class="loader-msg" id="loader-msg">Connecting…</div>
+  </div>
+
+  <div class="error-box" id="error-box">
+    <h3>⚠️ Could Not Load Page</h3>
+    <p id="error-msg">Something went wrong.</p>
+    <button onclick="document.getElementById('error-box').classList.remove('show')">Dismiss</button>
+  </div>
+
+  <div class="features" id="feat-section">
+    <h2>Why SwiftProxy?</h2>
+    <div class="feat-grid">
+      <div class="feat-card"><div class="feat-icon">🔒</div><div><h4>Real HTTPS Support</h4><p>Full SSL via Cloudflare — every request is encrypted end-to-end.</p></div></div>
+      <div class="feat-card"><div class="feat-icon">⚡</div><div><h4>Server-Side Fetching</h4><p>No CORS issues — pages are fetched on the server, not your browser.</p></div></div>
+      <div class="feat-card"><div class="feat-icon">🔗</div><div><h4>Link Rewriting</h4><p>All links and assets are rewritten to route through the proxy automatically.</p></div></div>
+      <div class="feat-card"><div class="feat-icon">👁️</div><div><h4>Anonymous Browsing</h4><p>Target sites see Cloudflare's IP, not yours.</p></div></div>
+      <div class="feat-card"><div class="feat-icon">🆓</div><div><h4>Free Tier Friendly</h4><p>Cloudflare Workers free tier supports 100k requests/day.</p></div></div>
+      <div class="feat-card"><div class="feat-icon">📱</div><div><h4>Mobile Ready</h4><p>Works on any device. No app or extension needed.</p></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- FRAME -->
+<div id="frame-section">
+  <div class="status-bar">
+    <span id="status-badge" class="badge secure">🔒 Secure</span>
+    <span class="status-url" id="status-url"></span>
+    <button class="close-btn" onclick="closeProxy()">✕ Home</button>
+  </div>
+  <div class="toolbar">
+    <button class="tb-btn" onclick="goBack()">◀</button>
+    <button class="tb-btn" onclick="goForward()">▶</button>
+    <button class="tb-btn" onclick="reload()">↺</button>
+    <input class="tb-url" id="tb-url" type="text" placeholder="Enter URL…" onkeydown="if(event.key==='Enter')navigate(this.value)"/>
+    <button class="tb-btn" onclick="navigate(document.getElementById('tb-url').value)">Go</button>
+    <button class="tb-btn" onclick="closeProxy()">🏠</button>
+  </div>
+  <iframe id="proxy-frame" sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-top-navigation"></iframe>
+</div>
+
+<footer id="main-footer">
+  &copy; 2026 SwiftProxy &nbsp;|&nbsp; <a href="#">Privacy Policy</a> &nbsp;|&nbsp; <a href="#">Terms</a> &nbsp;|&nbsp; For educational use only.
+</footer>
+
+<script>
+let workerBase = localStorage.getItem('swiftproxy_worker') || '';
+let currentUrl = '';
+let hist = [], hIdx = -1;
+
+// init
+if (workerBase) {
+  document.getElementById('worker-url').value = workerBase;
+  document.getElementById('worker-notice').style.background = '#f0fdf4';
+  document.getElementById('worker-notice').style.borderColor = '#bbf7d0';
+}
+
+function saveWorker() {
+  let v = document.getElementById('worker-url').value.trim().replace(/\/+$/, '');
+  if (!v) return;
+  // ensure https://
+  if (!/^https?:\/\//i.test(v)) v = 'https://' + v;
+  workerBase = v;
+  localStorage.setItem('swiftproxy_worker', v);
+  const n = document.getElementById('worker-notice');
+  n.style.background = '#f0fdf4';
+  n.style.borderColor = '#bbf7d0';
+  document.getElementById('worker-url').value = v;
+  alert('✅ Worker URL saved: ' + v + '\nYou can now browse!');
+}
+
+function norm(u) {
+  u = u.trim();
+  if (!u) return null;
+  if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
+  try { new URL(u); return u; } catch { return null; }
+}
+
+function proxyUrl(target) {
+  return `${workerBase}?url=${encodeURIComponent(target)}`;
+}
+
+async function startProxy() {
+  const url = norm(document.getElementById('url-input').value);
+  if (!url) { showErr('Please enter a valid URL.'); return; }
+  if (!workerBase) { showErr('Please set your Cloudflare Worker URL first (the yellow box above).'); return; }
+  await loadUrl(url);
+}
+
+async function loadUrl(url) {
+  showLoader();
+  document.getElementById('go-btn').disabled = true;
+
+  const msgs = ['Connecting to server…','Fetching page…','Rewriting links…','Almost there…'];
+  let mi = 0;
+  const t = setInterval(() => document.getElementById('loader-msg').textContent = msgs[mi++ % msgs.length], 800);
+
+  try {
+    const pUrl = proxyUrl(url);
+    console.log('Fetching via proxy:', pUrl);
+    const resp = await fetch(pUrl);
+    clearInterval(t);
+    const text = await resp.text();
+    if (!resp.ok) throw new Error(`Worker returned ${resp.status}: ${text.slice(0,120)}`);
+    renderFrame(text, url);
+  } catch(e) {
+    clearInterval(t);
+    showErr(`Error: ${e.message} | Worker: ${workerBase} | Fetching: ${url}`);
+  }
+  document.getElementById('go-btn').disabled = false;
+}
+
+function renderFrame(html, url) {
+  hideLoader();
+  currentUrl = url;
+  if (hIdx < hist.length - 1) hist = hist.slice(0, hIdx + 1);
+  hist.push(url); hIdx = hist.length - 1;
+
+  document.getElementById('home-section').style.display = 'none';
+  document.getElementById('main-footer').style.display = 'none';
+  const fs = document.getElementById('frame-section');
+  fs.classList.add('show');
+
+  document.getElementById('status-url').textContent = url;
+  document.getElementById('tb-url').value = url;
+  const secure = url.startsWith('https://');
+  const b = document.getElementById('status-badge');
+  b.textContent = secure ? '🔒 Secure' : '⚠️ Insecure';
+  b.className = 'badge ' + (secure ? 'secure' : 'warn');
+
+  document.getElementById('proxy-frame').srcdoc = html;
+}
+
+function closeProxy() {
+  document.getElementById('frame-section').classList.remove('show');
+  document.getElementById('home-section').style.display = '';
+  document.getElementById('main-footer').style.display = '';
+  currentUrl = ''; hist = []; hIdx = -1;
+}
+
+function reload() { if (currentUrl) loadUrl(currentUrl); }
+function navigate(v) { const u = norm(v); if (u) loadUrl(u); }
+function goBack() { if (hIdx > 0) { hIdx--; loadUrl(hist[hIdx]); } }
+function goForward() { if (hIdx < hist.length - 1) { hIdx++; loadUrl(hist[hIdx]); } }
+
+function showLoader() {
+  document.getElementById('loader').classList.add('show');
+  document.getElementById('error-box').classList.remove('show');
+}
+function hideLoader() { document.getElementById('loader').classList.remove('show'); }
+function showErr(msg) {
+  hideLoader();
+  document.getElementById('error-box').classList.add('show');
+  document.getElementById('error-msg').textContent = msg;
+}
+
+document.getElementById('url-input').addEventListener('keydown', e => { if (e.key === 'Enter') startProxy(); });
+</script>
+</body>
+</html>
