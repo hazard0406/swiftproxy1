@@ -105,6 +105,8 @@ nav{background:var(--primary);padding:0 1.25rem;display:flex;align-items:center;
 .btn-cancel{background:var(--border);color:var(--text)}
 .btn-save{background:var(--primary);color:#fff}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@mercuryworkshop/bare-mux@2.0.1/dist/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mercuryworkshop/scramjet@2.0.0-alpha/dist/scramjet.all.js"></script>
 </head>
 <body>
 
@@ -506,7 +508,33 @@ function extractTitle(html) {
 document.getElementById('worker-modal').addEventListener('click', function(e) {
   if (e.target === this) closeWorkerModal();
 });
+// ... your existing code above ...
 
+// 1. Paste the Scramjet engine initialization here:
+const { ScramjetController } = $scramjetLoadController();
+const scramjet = new ScramjetController({
+    files: {
+        wasm: "https://cdn.jsdelivr.net/npm/@mercuryworkshop/scramjet@2.0.0-alpha/dist/scramjet.wasm.wasm",
+        all: "https://cdn.jsdelivr.net/npm/@mercuryworkshop/scramjet@2.0.0-alpha/dist/scramjet.all.js",
+        sync: "https://cdn.jsdelivr.net/npm/@mercuryworkshop/scramjet@2.0.0-alpha/dist/scramjet.sync.js",
+    }
+});
+
+async function startProxy() {
+    await scramjet.init();
+    await navigator.serviceWorker.register("sw.js");
+    
+    const connection = new BareMux.BareMuxConnection("/baremux/worker.js");
+    await connection.setTransport("~@mercuryworkshop/epoxy-transport", [{ wisp: "wss://wisp.mercurywork.shop/" }]);
+}
+
+startProxy();
+
+// 2. This is your existing init call at the bottom:
+init(); 
+</script>
+</body>
+</html>
 init();
 </script>
 </body>
