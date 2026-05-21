@@ -376,80 +376,69 @@ function reload() {
 
 // ─── Load URL ────────────────────────────────────────────
 async function loadUrl(tabId, url, isNavigation) {
-  const tab = getTab(tabId);
-  if (!tab) return;
+    const tab = getTab(tabId);
+    if (!tab) return;
 
-  if (!workerBase) { openWorkerModal(); return; }
+    tab.url = url;
+    tab.state = 'loading';
+    tab.title = 'Loading…';
+    
+    const panel = getOrCreatePanel(tabId);
+    if (tabId === activeTabId) panel.classList.add('active');
 
-  tab.url = url;
-  tab.state = 'loading';
-  tab.title = 'Loading…';
-
-  const panel = getOrCreatePanel(tabId);
-  if (tabId === activeTabId) panel.classList.add('active');
-
-  // show loader, hide others
-  panel.querySelector('.home-page').style.display = 'none';
-  panel.querySelector('.loader-wrap').classList.add('show');
-  panel.querySelector('.error-wrap').classList.remove('show');
-  const frame = panel.querySelector('.proxy-frame');
-  frame.style.display = 'none';
-
-  if (tabId === activeTabId) {
-    document.getElementById('tb-url').value = url;
-    updateToolbar();
-  }
-  renderTabBar();
-
-  // loading message ticker
-  const msgs = ['Connecting…','Fetching page…','Rewriting links…','Almost there…'];
-  let mi = 0;
-  const msgEl = panel.querySelector('.loader-msg');
-  const ticker = setInterval(() => { msgEl.textContent = msgs[mi++ % msgs.length]; }, 800);
-
-  try {
-    const resp = await fetch(`${workerBase}?url=${encodeURIComponent(url)}`);
-    clearInterval(ticker);
-    const html = await resp.text();
-    if (!resp.ok) throw new Error(`Worker returned ${resp.status}`);
-
-    // push history
-    if (!isNavigation) {
-      if (tab.hIdx < tab.hist.length - 1) tab.hist = tab.hist.slice(0, tab.hIdx + 1);
-      tab.hist.push(url);
-      tab.hIdx = tab.hist.length - 1;
-    }
-
-    tab.state = 'loaded';
-    tab.title = extractTitle(html) || new URL(url).hostname;
-    tab.favicon = `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=32`;
-
-    panel.querySelector('.loader-wrap').classList.remove('show');
-    frame.style.display = 'flex';
-    frame.srcdoc = html;
+    panel.querySelector('.home-page').style.display = 'none';
+    panel.querySelector('.loader-wrap').classList.add('show');
+    panel.querySelector('.error-wrap').classList.remove('show');
+    
+    const frame = panel.querySelector('.proxy-frame');
+    frame.style.display = 'none';
 
     if (tabId === activeTabId) {
-      document.getElementById('tb-url').value = url;
-      const secure = url.startsWith('https://');
-      const badge = document.getElementById('tb-badge');
-      badge.style.display = '';
-      badge.textContent = secure ? '🔒' : '⚠️';
-      badge.className = 'badge ' + (secure ? 'secure' : 'warn');
-      updateToolbar();
+        document.getElementById('tb-url').value = url;
+        updateToolbar();
     }
     renderTabBar();
 
-  } catch(e) {
-    clearInterval(ticker);
-    tab.state = 'error';
-    tab.title = 'Error';
-    panel.querySelector('.loader-wrap').classList.remove('show');
-    const errEl = panel.querySelector('.error-wrap');
-    errEl.classList.add('show');
-    panel.querySelector('[id^="error-msg"]').textContent = `Could not load "${url}": ${e.message}`;
-    renderTabBar();
-    if (tabId === activeTabId) updateToolbar();
-  }
+    try {
+        // SCRAMJET ROUTING: Encode the URL and set the iframe src
+        const proxyPrefix = "/scram/service/"; // Default Scramjet prefix
+        frame.src = proxyPrefix + scramjet.encodeUrl(url);
+
+        // Update tab status safely
+        tab.state = 'loaded';
+        tab.title = new URL(url).hostname;
+        tab.favicon = `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=32`;
+        
+        // Push history
+        if (!isNavigation) {
+            if (tab.hIdx < tab.hist.length - 1) tab.hist = tab.hist.slice(0, tab.hIdx + 1);
+            tab.hist.push(url);
+            tab.hIdx = tab.hist.length - 1;
+        }
+
+        panel.querySelector('.loader-wrap').classList.remove('show');
+        frame.style.display = 'flex';
+        
+        if (tabId === activeTabId) {
+            document.getElementById('tb-url').value = url;
+            const secure = url.startsWith('https://');
+            const badge = document.getElementById('tb-badge');
+            badge.style.display = '';
+            badge.textContent = secure ? '🔒' : '⚠️';
+            badge.className = 'badge ' + (secure ? 'secure' : 'warn');
+            updateToolbar();
+        }
+        renderTabBar();
+    } catch(e) {
+        tab.state = 'error';
+        tab.title = 'Error';
+        panel.querySelector('.loader-wrap').classList.remove('show');
+        const errEl = panel.querySelector('.error-wrap');
+        errEl.classList.add('show');
+        panel.querySelector('[id^="error-msg"]').textContent = `Could not load "${url}": ${e.message}`;
+        renderTabBar();
+        if (tabId === activeTabId) updateToolbar();
+    }
 }
 
 function showHome(tabId) {
