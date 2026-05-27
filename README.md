@@ -14,7 +14,7 @@ Deploy worker.js to Cloudflare Workers
 Host index.html on any static hosting provider
 Open the site, enter your Worker URL, and start browsing
 
-https://cjadams511fl.github.io/swiftproxy
+https://hazard0406.github.io/swiftproxy
 
 or
 
